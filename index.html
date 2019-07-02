@@ -41,7 +41,28 @@
                         :r="pieceRadius"
                         fill="#ffd500"
                         />
+                    <circle
+                        id="computerPiece"
+                        :r="pieceRadius"
+                        fill="#e63c1a"
+                        />
                 </defs>
+                <template
+                    v-for="(pieceColumn, column) in pieceColumns">
+                    <use
+                        v-for="(piece, row) in pieceColumn"
+                        v-if="piece"
+                        href="#humanPiece"
+                        :x="cx(column)"
+                        :y="cy(row)"
+                        />
+                    <use
+                        v-else
+                        href="#computerPiece"
+                        :x="cx(column)"
+                        :y="cy(row)"
+                        />
+                </template>
                 <use 
                     v-if="hoverColumn != null"
                     href="#humanPiece"
@@ -56,7 +77,7 @@
                     mask="url(#boardMask)"
                     />
                 <rect
-                    v-for="(_, column) in columns"
+                    v-for="column in freeColumns"
                     :x="boardPadding + column*(2*pieceRadius + pieceGap)"
                     :y="aboveBoard"
                     :width="2*pieceRadius"
@@ -65,6 +86,7 @@
                     pointer-events="visible"
                     @mouseover="hoverColumn = column"
                     @mouseout="hoverColumn = null"
+                    @click="attemptMove(column)"
                     />
             </svg>
         </div>

@@ -16,8 +16,11 @@ let app = new Vue({
         pieceGap: 10,
         hoverHeight: 10,
     },
-    data: {
-        hoverColumn: null,
+    data: function() {
+        return {
+            hoverColumn: null,
+            pieceColumns: Array(this.columns).fill(null).map(() => []),
+        }
     },
     computed: {
         pieceRadius: function() {
@@ -36,6 +39,13 @@ let app = new Vue({
         aboveBoard: function() {
             return 2*this.pieceRadius + this.hoverHeight
         },
+        freeColumns: function() {
+            return Array.from(
+                this.pieceColumns.keys()
+            ).filter(column => {
+                return this.pieceColumns[column].length < this.rows
+            })
+        },
     },
     methods: {
         cx: function(column) {
@@ -45,9 +55,15 @@ let app = new Vue({
         },
         cy: function(row) {
             return this.aboveBoard
-                + this.boardPadding
-                + (2*row + 1)*this.pieceRadius
-                + this.pieceGap*row
+                + this.boardHeight
+                - this.boardPadding
+                - (2*row + 1)*this.pieceRadius
+                - this.pieceGap*row
+        },
+        attemptMove: function(column) {
+            this.pieceColumns[column].push(true)
+            if (this.pieceColumns[column].length == this.rows)
+                this.hoverColumn = null
         },
     },
 })
