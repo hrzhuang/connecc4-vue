@@ -18,6 +18,7 @@
                 :width="boardWidth"
                 :height="aboveBoard + boardHeight"
                 xmlns="http://www.w3.org/2000/svg">
+
                 <defs>
                     <mask id="boardMask">
                         <rect
@@ -47,28 +48,35 @@
                         fill="#e63c1a"
                         />
                 </defs>
+
+                <!-- Pieces on board -->
                 <template
                     v-for="(pieceColumn, column) in pieceColumns">
                     <use
                         v-for="(piece, row) in pieceColumn"
-                        v-if="piece"
-                        href="#humanPiece"
-                        :x="cx(column)"
-                        :y="cy(row)"
-                        />
-                    <use
-                        v-else
-                        href="#computerPiece"
+                        :href="pieceID(piece)"
                         :x="cx(column)"
                         :y="cy(row)"
                         />
                 </template>
+
+                <!-- Hovering piece -->
                 <use 
-                    v-if="hoverColumn != null"
+                    v-show="hoverColumn != null && awaitingInput"
                     href="#humanPiece"
                     :x="cx(hoverColumn)"
                     :y="pieceRadius"
                     />
+
+                <!-- Animated piece -->
+                <use
+                    v-if="animationState"
+                    :href="pieceID(animationState.human)"
+                    :x="cx(animationState.column)"
+                    :y="animationState.currentCY"
+                    />
+
+                <!-- Board cover -->
                 <rect
                     :y="aboveBoard"
                     :width="boardWidth" 
@@ -76,6 +84,8 @@
                     fill="#3d6bf5"
                     mask="url(#boardMask)"
                     />
+
+                <!-- Hover column detector -->
                 <rect
                     v-for="column in freeColumns"
                     :x="boardPadding + column*(2*pieceRadius + pieceGap)"

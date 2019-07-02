@@ -7,6 +7,7 @@ let app = new Vue({
         'boardPadding',
         'pieceGap',
         'hoverHeight',
+        'acceleration',
     ],
     propsData: {
         rows: 6,
@@ -15,11 +16,13 @@ let app = new Vue({
         boardPadding: 10,
         pieceGap: 10,
         hoverHeight: 10,
+        acceleration: 1,
     },
     data: function() {
         return {
             hoverColumn: null,
             pieceColumns: Array(this.columns).fill(null).map(() => []),
+            animationState: null,
         }
     },
     computed: {
@@ -46,6 +49,9 @@ let app = new Vue({
                 return this.pieceColumns[column].length < this.rows
             })
         },
+        awaitingInput: function() {
+            return !this.animationState
+        },
     },
     methods: {
         cx: function(column) {
@@ -60,10 +66,38 @@ let app = new Vue({
                 - (2*row + 1)*this.pieceRadius
                 - this.pieceGap*row
         },
+        pieceID: function(human) {
+            if (human) {
+                return "#humanPiece"
+            }
+            else {
+                return "#computerPiece"
+            }
+        },
         attemptMove: function(column) {
-            this.pieceColumns[column].push(true)
-            if (this.pieceColumns[column].length == this.rows)
-                this.hoverColumn = null
+            if (this.awaitingInput) {
+                this.animationState = {
+                    column: column,
+                    currentCY: this.pieceRadius,
+                    human: true,
+                }
+                let targetCY = this.cy(this.pieceColumns[column].length)
+                let velocity = 0
+                let animate = () => {
+                    velocity += this.acceleration
+                    this.animationState.currentCY += velocity
+                    if (this.animationState.currentCY >= targetCY) {
+                        this.animationState = null
+                        this.pieceColumns[column].push(true)
+                        if (this.pieceColumns[column].length == this.rows)
+                            this.hoverColumn = null
+                    }
+                    else {
+                        requestAnimationFrame(animate)
+                    }
+                }
+                requestAnimationFrame(animate)
+            }
         },
     },
 })
