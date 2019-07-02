@@ -6,6 +6,7 @@ let app = new Vue({
         'holeRadius',
         'boardPadding',
         'pieceGap',
+        'hoverHeight',
     ],
     propsData: {
         rows: 6,
@@ -13,6 +14,10 @@ let app = new Vue({
         holeRadius: 20,
         boardPadding: 10,
         pieceGap: 10,
+        hoverHeight: 10,
+    },
+    data: {
+        hoverColumn: null,
     },
     computed: {
         pieceRadius: function() {
@@ -28,6 +33,9 @@ let app = new Vue({
                 + this.pieceGap*(this.rows - 1)
                 + 2*this.boardPadding
         },
+        aboveBoard: function() {
+            return 2*this.pieceRadius + this.hoverHeight
+        },
     },
     methods: {
         cx: function(column) {
@@ -36,7 +44,8 @@ let app = new Vue({
                 + this.pieceGap*column
         },
         cy: function(row) {
-            return this.boardPadding
+            return this.aboveBoard
+                + this.boardPadding
                 + (2*row + 1)*this.pieceRadius
                 + this.pieceGap*row
         },

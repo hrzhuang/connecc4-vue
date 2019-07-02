@@ -16,29 +16,56 @@
                 version="1.1"
                 baseProfile="full"
                 :width="boardWidth"
-                :height="boardHeight"
+                :height="aboveBoard + boardHeight"
                 xmlns="http://www.w3.org/2000/svg">
-                <g>
+                <defs>
                     <mask id="boardMask">
                         <rect
+                            :y="aboveBoard"
                             :width="boardWidth"
                             :height="boardHeight"
                             fill="white"
-                            rx="10"></rect>
+                            rx="10"
+                            />
                         <template v-for="(_, row) in rows">
                             <circle
                                 v-for="(_, column) in columns"
                                 :cx="cx(column)"
                                 :cy="cy(row)"
-                                :r="holeRadius"></circle>
+                                :r="holeRadius"
+                                />
                         </template>
                     </mask>
-                    <rect
-                        :width="boardWidth" 
-                        :height="boardHeight" 
-                        fill="#3d6bf5"
-                        mask="url(#boardMask)"></rect>
-                </g>
+                    <circle
+                        id="humanPiece"
+                        :r="pieceRadius"
+                        fill="#ffd500"
+                        />
+                </defs>
+                <use 
+                    v-if="hoverColumn != null"
+                    href="#humanPiece"
+                    :x="cx(hoverColumn)"
+                    :y="pieceRadius"
+                    />
+                <rect
+                    :y="aboveBoard"
+                    :width="boardWidth" 
+                    :height="boardHeight" 
+                    fill="#3d6bf5"
+                    mask="url(#boardMask)"
+                    />
+                <rect
+                    v-for="(_, column) in columns"
+                    :x="boardPadding + column*(2*pieceRadius + pieceGap)"
+                    :y="aboveBoard"
+                    :width="2*pieceRadius"
+                    :height="boardHeight"
+                    fill="none"
+                    pointer-events="visible"
+                    @mouseover="hoverColumn = column"
+                    @mouseout="hoverColumn = null"
+                    />
             </svg>
         </div>
 
