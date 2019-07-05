@@ -62,7 +62,7 @@
 
                 <!-- Hovering piece -->
                 <use 
-                    v-show="hoverColumn != null && awaitingInput"
+                    v-show="showHoveringPiece"
                     href="#humanPiece"
                     :x="cx(hoverColumn)"
                     :y="pieceRadius"
@@ -71,7 +71,7 @@
                 <!-- Animated piece -->
                 <use
                     v-if="animationState"
-                    :href="pieceID(animationState.human)"
+                    :href="pieceID(animationState.isHuman)"
                     :x="cx(animationState.column)"
                     :y="animationState.currentCY"
                     />

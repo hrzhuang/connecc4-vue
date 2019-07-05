@@ -52,6 +52,11 @@ let app = new Vue({
         awaitingInput: function() {
             return !this.animationState
         },
+        showHoveringPiece: function() {
+            return this.hoverColumn != null
+                && this.pieceColumns[this.hoverColumn].length < this.rows
+                && this.awaitingInput
+        },
     },
     methods: {
         cx: function(column) {
@@ -66,8 +71,8 @@ let app = new Vue({
                 - (2*row + 1)*this.pieceRadius
                 - this.pieceGap*row
         },
-        pieceID: function(human) {
-            if (human) {
+        pieceID: function(isHuman) {
+            if (isHuman) {
                 return "#humanPiece"
             }
             else {
@@ -76,10 +81,15 @@ let app = new Vue({
         },
         attemptMove: function(column) {
             if (this.awaitingInput) {
+                this.animateDrop(column, true)
+            }
+        },
+        animateDrop: function(column, isHuman) {
+            return new Promise(resolve => {
                 this.animationState = {
                     column: column,
                     currentCY: this.pieceRadius,
-                    human: true,
+                    isHuman: isHuman,
                 }
                 let targetCY = this.cy(this.pieceColumns[column].length)
                 let velocity = 0
@@ -88,16 +98,15 @@ let app = new Vue({
                     this.animationState.currentCY += velocity
                     if (this.animationState.currentCY >= targetCY) {
                         this.animationState = null
-                        this.pieceColumns[column].push(true)
-                        if (this.pieceColumns[column].length == this.rows)
-                            this.hoverColumn = null
+                        this.pieceColumns[column].push(isHuman)
+                        resolve()
                     }
                     else {
                         requestAnimationFrame(animate)
                     }
                 }
                 requestAnimationFrame(animate)
-            }
+            })
         },
     },
 })
