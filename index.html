@@ -27,8 +27,8 @@
                             />
                         <template v-for="(_, row) in rows">
                             <circle
-                                v-for="(_, column) in columns"
-                                :cx="cx(column)"
+                                v-for="(_, col) in cols"
+                                :cx="cx(col)"
                                 :cy="cy(row)"
                                 :r="holeRadius"
                                 />
@@ -48,11 +48,11 @@
 
                 <!-- Pieces on board -->
                 <template
-                    v-for="(pieceColumn, column) in pieceColumns">
+                    v-for="(_, col) in board.cols">
                     <use
-                        v-for="(piece, row) in pieceColumn"
-                        :href="pieceID(piece)"
-                        :x="cx(column)"
+                        v-for="(_, row) in board.colHeight(col)"
+                        :href="pieceID(board.get(row, col))"
+                        :x="cx(col)"
                         :y="cy(row)"
                         />
                 </template>
@@ -61,7 +61,7 @@
                 <use 
                     v-show="showHoveringPiece"
                     href="#humanPiece"
-                    :x="cx(hoverColumn)"
+                    :x="cx(hoverCol)"
                     :y="pieceRadius"
                     />
 
@@ -69,7 +69,7 @@
                 <use
                     v-if="animationState"
                     :href="pieceID(animationState.isHuman)"
-                    :x="cx(animationState.column)"
+                    :x="cx(animationState.col)"
                     :y="animationState.currentCY"
                     />
 
@@ -84,16 +84,16 @@
 
                 <!-- Hover column detector -->
                 <rect
-                    v-for="column in freeColumns"
-                    :x="boardPadding + column*(2*pieceRadius + pieceGap)"
+                    v-for="col in board.availableMoves()"
+                    :x="boardPadding + col*(2*pieceRadius + pieceGap)"
                     :y="aboveBoard"
                     :width="2*pieceRadius"
                     :height="boardHeight"
                     fill="none"
                     pointer-events="visible"
-                    @mouseover="hoverColumn = column"
-                    @mouseout="hoverColumn = null"
-                    @click="attemptMove(column)"
+                    @mouseover="hoverCol = col"
+                    @mouseout="hoverCol = null"
+                    @click="attemptMove(col)"
                     />
             </svg>
         </div>
