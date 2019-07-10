@@ -81,12 +81,10 @@ new Vue({
             if (this.awaitingInput) {
                 this.awaitingInput = false
 
-                // TODO: Make minimax run in parallel with animation
-                // TODO: Use a web worker for computer player
                 Promise.all([
                     this.animateDrop(col, true)
                         .then(() => {
-                            let gameOver = this.board.makeMove(col, true)
+                            let { gameOver, draw } = this.board.makeMove(col, true)
                         }),
                     this.worker.postMessage({
                         board: this.board,
@@ -96,7 +94,7 @@ new Vue({
                     .then(([, computerMove]) => {
                         return this.animateDrop(computerMove, false)
                             .then(() => {
-                                let gameOver = this.board.makeMove(computerMove, false)
+                                let { gameOver, draw } = this.board.makeMove(computerMove, false)
                             })
                     })
                     .then(() => {

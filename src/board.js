@@ -43,12 +43,16 @@ export default class Board {
     makeMove(col, isHuman) {
         this._columns[col].push(isHuman)
 
+        /* Check draw */
+        if (this._columns.every(column => column.length == this.rows))
+            return { gameOver: true, draw: true }
+
         /* Check column victory */
         if (
             this.colHeight(col) >= 4 
             && this._columns[col].slice(-4).every(piece => piece == isHuman)
         )
-            return true
+            return { gameOver: true, draw: false }
 
         /* Check row victory */
         let row = this.colHeight(col) - 1
@@ -65,7 +69,7 @@ export default class Board {
                 length = 0
 
             if (length == 4)
-                return true
+                return { gameOver: true, draw: false }
         }
 
         /* Check diagonal victory */
@@ -86,7 +90,7 @@ export default class Board {
                 length = 0
 
             if (length == 4)
-                return true
+                return { gameOver: true, draw: false }
         }
         
         for (
@@ -106,22 +110,26 @@ export default class Board {
                 length = 0
 
             if (length == 4)
-                return true
+                return { gameOver: true, draw: false }
         }
 
-        return false
+        return { gameOver: false }
     }
 
     minimax(move, depth, minimizing) {
-        let gameOver = this.makeMove(move, minimizing), evaluation
+        let { gameOver, draw } = this.makeMove(move, minimizing), evaluation
 
-        if (gameOver)
-            evaluation = minimizing ? Infinity : -Infinity
+        if (gameOver) {
+            if (draw)
+                evaluation = 0
+            else
+                evaluation = minimizing ? -Infinity : Infinity
+        }
         else if (depth == 0)
             evaluation = this.score()
         else {
             if (minimizing) {
-                evaluation = Math.min(
+                evaluation = Math.max(
                     ...this.availableMoves()
                         .map(availableMove => 
                             this.minimax(availableMove, depth - 1, false)
@@ -129,7 +137,7 @@ export default class Board {
                 )
             }
             else {
-                evaluation = Math.max(
+                evaluation = Math.min(
                     ...this.availableMoves()
                         .map(availableMove =>
                             this.minimax(availableMove, depth - 1, true)
