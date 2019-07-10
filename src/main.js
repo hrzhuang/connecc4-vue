@@ -1,8 +1,10 @@
 import Vue from 'vue'
 import Board from './board.js'
+import Worker from 'worker-loader!./worker.js'
+import PromiseWorker from 'promise-worker'
 
 
-let app = new Vue({
+new Vue({
     el: "#app",
     props: [
         'rows',
@@ -28,6 +30,7 @@ let app = new Vue({
             board: new Board(this.rows, this.cols),
             animationState: null,
             awaitingInput: true,
+            worker: new PromiseWorker(new Worker()),
         }
     },
     computed: {
@@ -84,9 +87,18 @@ let app = new Vue({
                     this.animateDrop(col, true)
                         .then(() => {
                             let gameOver = this.board.makeMove(col, true)
-                            console.log(gameOver)
                         }),
+                    this.worker.postMessage({
+                        board: this.board,
+                        move: col,
+                    })
                 ])
+                    .then(([, computerMove]) => {
+                        return this.animateDrop(computerMove, false)
+                            .then(() => {
+                                let gameOver = this.board.makeMove(computerMove, false)
+                            })
+                    })
                     .then(() => {
                         this.awaitingInput = true
                     })

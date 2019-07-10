@@ -5,6 +5,12 @@ export default class Board {
         this._columns = Array(cols).fill(null).map(() => [])
     }
 
+    static from(board) {
+        let newBoard = new Board(board._rows, board._cols)
+        newBoard._columns = board._columns
+        return newBoard
+    }
+
     get rows() {
         return this._rows
     }
