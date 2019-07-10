@@ -118,7 +118,7 @@ export default class Board {
                 evaluation = Math.min(
                     ...this.availableMoves()
                         .map(availableMove => 
-                            minimax(availableMove, depth - 1, false)
+                            this.minimax(availableMove, depth - 1, false)
                         )
                 )
             }
@@ -126,7 +126,7 @@ export default class Board {
                 evaluation = Math.max(
                     ...this.availableMoves()
                         .map(availableMove =>
-                            minimax(availableMove, depth - 1, true)
+                            this.minimax(availableMove, depth - 1, true)
                         )
                 )
             }
