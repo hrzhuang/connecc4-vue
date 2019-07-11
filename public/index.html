@@ -1,101 +1,17 @@
-<!doctype html>
-<html>
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>connecc4</title>
-    </head>
-
-
-    <body>
-        <div id="app">
-            <svg
-                version="1.1"
-                baseProfile="full"
-                :width="boardWidth"
-                :height="aboveBoard + boardHeight"
-                xmlns="http://www.w3.org/2000/svg">
-
-                <defs>
-                    <mask id="boardMask">
-                        <rect
-                            :y="aboveBoard"
-                            :width="boardWidth"
-                            :height="boardHeight"
-                            fill="white"
-                            rx="10"
-                            />
-                        <template v-for="(_, row) in rows">
-                            <circle
-                                v-for="(_, col) in cols"
-                                :cx="cx(col)"
-                                :cy="cy(row)"
-                                :r="holeRadius"
-                                />
-                        </template>
-                    </mask>
-                    <circle
-                        id="humanPiece"
-                        :r="pieceRadius"
-                        fill="#ffd500"
-                        />
-                    <circle
-                        id="computerPiece"
-                        :r="pieceRadius"
-                        fill="#e63c1a"
-                        />
-                </defs>
-
-                <!-- Pieces on board -->
-                <template
-                    v-for="(_, col) in board.cols">
-                    <use
-                        v-for="(_, row) in board.colHeight(col)"
-                        :href="pieceID(board.get(row, col))"
-                        :x="cx(col)"
-                        :y="cy(row)"
-                        />
-                </template>
-
-                <!-- Hovering piece -->
-                <use 
-                    v-show="showHoveringPiece"
-                    href="#humanPiece"
-                    :x="cx(hoverCol)"
-                    :y="pieceRadius"
-                    />
-
-                <!-- Animated piece -->
-                <use
-                    v-if="animationState"
-                    :href="pieceID(animationState.isHuman)"
-                    :x="cx(animationState.col)"
-                    :y="animationState.currentCY"
-                    />
-
-                <!-- Board cover -->
-                <rect
-                    :y="aboveBoard"
-                    :width="boardWidth" 
-                    :height="boardHeight" 
-                    fill="#3d6bf5"
-                    mask="url(#boardMask)"
-                    />
-
-                <!-- Hover column detector -->
-                <rect
-                    v-for="col in board.availableMoves()"
-                    :x="boardPadding + col*(2*pieceRadius + pieceGap)"
-                    :y="aboveBoard"
-                    :width="2*pieceRadius"
-                    :height="boardHeight"
-                    fill="none"
-                    pointer-events="visible"
-                    @mouseover="hoverCol = col"
-                    @mouseout="hoverCol = null"
-                    @click="attemptMove(col)"
-                    />
-            </svg>
-        </div>
-    </body>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <link rel="icon" href="<%= BASE_URL %>favicon.ico">
+    <title>connecc4</title>
+  </head>
+  <body>
+    <noscript>
+      <strong>We're sorry but connecc4 doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
+    </noscript>
+    <div id="app"></div>
+    <!-- built files will be auto injected -->
+  </body>
 </html>
