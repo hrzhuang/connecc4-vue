@@ -1,52 +1,60 @@
 <template>
-    <svg
-        version="1.1"
-        baseprofile="full"
-        :width="boardWidth"
-        :height="aboveBoard + boardHeight"
-        xmlns="http://www.w3.org/2000/svg">
+    <div>
+        <svg
+            version="1.1"
+            baseprofile="full"
+            :width="boardWidth"
+            :height="aboveBoard + boardHeight"
+            xmlns="http://www.w3.org/2000/svg">
 
-        <!-- pieces on board -->
-        <template
-            v-for="(_, col) in cols"
-            >
-            <GamePiece
-                v-for="(_, row) in board.colHeight(col)"
-                :key="`${row},${col}`"
-                :isHuman="board.get(row, col)"
-                :x="cx(col)"
-                :y="cy(row)"
+            <!-- pieces on board -->
+            <template
+                v-for="(_, col) in cols"
+                >
+                <GamePiece
+                    v-for="(_, row) in board.colHeight(col)"
+                    :key="`${row},${col}`"
+                    :isHuman="board.get(row, col)"
+                    :x="cx(col)"
+                    :y="cy(row)"
+                    />
+            </template>
+
+            <!-- Hovering piece -->
+            <GamePiece 
+                v-show="showHoveringPiece"
+                :isHuman="true"
+                :x="cx(hoverCol)"
+                :y="pieceRadius"
                 />
-        </template>
 
-        <!-- Hovering piece -->
-        <GamePiece 
-            v-show="showHoveringPiece"
-            :isHuman="true"
-            :x="cx(hoverCol)"
-            :y="pieceRadius"
+            <!-- Animated piece -->
+            <GamePiece
+                v-if="animationState"
+                :isHuman="animationState.isHuman"
+                :x="cx(animationState.col)"
+                :y="animationState.currentCY"
+                />
+
+            <GameBoard />
+
+            <!-- Hover column detector -->
+            <GameInvisibleColumn
+                v-for="col in board.availableMoves()"
+                :key="col"
+                :col="col"
+                @mouseover.native="hoverCol = col"
+                @mouseout.native="hoverCol = null"
+                @click.native="attemptMove(col)"
+                />
+        </svg>
+
+        <GameMessageBar
+            :humanTurn="humanTurn"
+            :gameOver="gameOver"
+            :humanWin="humanWin"
             />
-
-        <!-- Animated piece -->
-        <GamePiece
-            v-if="animationState"
-            :isHuman="animationState.isHuman"
-            :x="cx(animationState.col)"
-            :y="animationState.currentCY"
-            />
-
-        <GameBoard />
-
-        <!-- Hover column detector -->
-        <GameInvisibleColumn
-            v-for="col in board.availableMoves()"
-            :key="col"
-            :col="col"
-            @mouseover.native="hoverCol = col"
-            @mouseout.native="hoverCol = null"
-            @click.native="attemptMove(col)"
-            />
-    </svg>
+    </div>
 </template>
 
 
@@ -58,6 +66,7 @@ import gameGraphicsMixin from './gameGraphicsMixin.js'
 import GameBoard from './GameBoard.vue'
 import GamePiece from './GamePiece.vue'
 import GameInvisibleColumn from './GameInvisibleColumn.vue'
+import GameMessageBar from './GameMessageBar.vue'
 
 export default {
     mixins: [ gameGraphicsMixin ],
@@ -65,6 +74,7 @@ export default {
         GameBoard,
         GamePiece,
         GameInvisibleColumn,
+        GameMessageBar,
     },
     data: function() {
         return {
@@ -72,7 +82,9 @@ export default {
             // The board object will be initiated in created hook
             board: null,
             animationState: null,
-            awaitingInput: true,
+            humanTurn: true,
+            gameOver: false,
+            humanWin: null,
             worker: new PromiseWorker(new Worker()),
         }
     },
@@ -83,18 +95,24 @@ export default {
         showHoveringPiece: function() {
             return this.hoverCol != null
                 && this.board.isAvailableMove(this.hoverCol)
-                && this.awaitingInput
+                && this.humanTurn
         },
     },
     methods: {
         attemptMove: function(col) {
-            if (this.awaitingInput) {
-                this.awaitingInput = false
+            if (this.humanTurn) {
+                this.humanTurn = false
 
                 Promise.all([
                     this.animateDrop(col, true)
                         .then(() => {
-                            let { gameOver, draw } = this.board.makeMove(col, true)
+                            let { gameOver, draw } =
+                                this.board.makeMove(col, true)
+                            if (gameOver) {
+                                this.gameOver = true
+                                if (!draw)
+                                    this.humanWin = true
+                            }
                         }),
                     this.worker.postMessage({
                         board: this.board,
@@ -102,13 +120,23 @@ export default {
                     })
                 ])
                     .then(([, computerMove]) => {
-                        return this.animateDrop(computerMove, false)
-                            .then(() => {
-                                let { gameOver, draw } = this.board.makeMove(computerMove, false)
-                            })
+                        if (!this.gameOver) {
+                            return this.animateDrop(computerMove, false)
+                                .then(() => {
+                                    let { gameOver, draw } =
+                                        this.board.makeMove(computerMove, false)
+                                    if (gameOver) {
+                                        this.gameOver = true
+                                        if (!draw)
+                                            this.humanWin = false
+                                    }
+                                })
+                        }
                     })
                     .then(() => {
-                        this.awaitingInput = true
+                        if (!this.gameOver) {
+                            this.humanTurn = true
+                        }
                     })
             }
         },

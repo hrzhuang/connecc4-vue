@@ -35,10 +35,6 @@ export default class Board {
     makeMove(col, isHuman) {
         this._columns[col].push(isHuman)
 
-        /* Check draw */
-        if (this._columns.every(column => column.length == this.rows))
-            return { gameOver: true, draw: true }
-
         /* Check column victory */
         if (
             this.colHeight(col) >= 4 
@@ -104,6 +100,10 @@ export default class Board {
             if (length == 4)
                 return { gameOver: true, draw: false }
         }
+
+        /* Check draw */
+        if (this._columns.every(column => column.length == this._rows))
+            return { gameOver: true, draw: true }
 
         return { gameOver: false }
     }
