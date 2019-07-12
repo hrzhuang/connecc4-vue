@@ -12,7 +12,7 @@
                 <template v-for="(_, row) in rows">
                     <circle
                         v-for="(_, col) in cols"
-                        :key="row*col + col"
+                        :key="`${row},${col}`"
                         :cx="cx(col)"
                         :cy="cy(row)"
                         :r="holeRadius"

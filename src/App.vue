@@ -12,7 +12,7 @@
             >
             <GamePiece
                 v-for="(_, row) in board.colHeight(col)"
-                :key="col*row+row"
+                :key="`${row},${col}`"
                 :isHuman="board.get(row, col)"
                 :x="cx(col)"
                 :y="cy(row)"
