@@ -59,10 +59,15 @@
 
 
 <script>
-import Worker from 'worker-loader!./worker.js'
 import PromiseWorker from 'promise-worker'
+
+import Worker from 'worker-loader!./worker.js'
 import Board from './board.js'
+
+/* Mixins */
 import gameGraphicsMixin from './gameGraphicsMixin.js'
+
+/* Components */
 import GameBoard from './GameBoard.vue'
 import GamePiece from './GamePiece.vue'
 import GameInvisibleColumn from './GameInvisibleColumn.vue'
@@ -78,17 +83,28 @@ export default {
     },
     data: function() {
         return {
+            // The column the mouse is hovering over
             hoverCol: null,
-            // The board object will be initiated in created hook
+
+            // The game board containing placed pieces; initialized in created
+            // hook
             board: null,
+
+            // The state of the drop animation
             animationState: null,
+
+            // The state of the game flow
+            // humanWin: true = human wins, false = computer wins, null = draw
             humanTurn: true,
             gameOver: false,
-            humanWin: null,
+            humanWin: null, // Is not relevant until game is over
+
+            // The worker responsible for the computer player
             worker: new PromiseWorker(new Worker()),
         }
     },
     created: function() {
+        // Initialize the game board
         this.board = new Board(this.rows, this.cols)
     },
     computed: {
@@ -99,49 +115,60 @@ export default {
         },
     },
     methods: {
-        attemptMove: function(col) {
+        attemptMove: async function(col) {
+            let gameOver, draw
+
+            // Only proceed with the attempt if it's actually the human's turn 
+            // to move
             if (this.humanTurn) {
                 this.humanTurn = false
 
-                Promise.all([
-                    this.animateDrop(col, true)
-                        .then(() => {
-                            let { gameOver, draw } =
-                                this.board.makeMove(col, true)
-                            if (gameOver) {
-                                this.gameOver = true
-                                if (!draw)
-                                    this.humanWin = true
-                            }
-                        }),
+                let [, computerMove] = await Promise.all([
+                    (async () => {
+                        // Piece drop animation
+                        await this.animateDrop(col, true)
+
+                        // Make the human player's move onto the actual board
+                        ;({ gameOver, draw } = this.board.makeMove(col, true))
+                    })(),
+
+                    // Compute computer player's next move
                     this.worker.postMessage({
                         board: this.board,
                         move: col,
-                    })
+                    }),
                 ])
-                    .then(([, computerMove]) => {
-                        if (!this.gameOver) {
-                            return this.animateDrop(computerMove, false)
-                                .then(() => {
-                                    let { gameOver, draw } =
-                                        this.board.makeMove(computerMove, false)
-                                    if (gameOver) {
-                                        this.gameOver = true
-                                        if (!draw)
-                                            this.humanWin = false
-                                    }
-                                })
-                        }
-                    })
-                    .then(() => {
-                        if (!this.gameOver) {
-                            this.humanTurn = true
-                        }
-                    })
+
+                if (gameOver) {
+                    // Update state of game flow
+                    this.gameOver = true
+                    if (!draw)
+                        this.humanWin = true
+                }
+                else {
+                    // Piece drop animation
+                    await this.animateDrop(computerMove, false)
+
+                    // Make the computer player's move onto the actual board
+                    ;({ gameOver, draw } =
+                        this.board.makeMove(computerMove, false))
+
+                    if (gameOver) {
+                        // Update state of game flow
+                        this.gameOver = true
+                        if (!draw)
+                            this.humanWin = false
+                    }
+                    else {
+                        // Return control back to human player
+                        this.humanTurn = true
+                    }
+                }
             }
         },
         animateDrop: function(col, isHuman) {
             return new Promise(resolve => {
+                // Initiate animation variables
                 this.animationState = {
                     col: col,
                     currentCY: this.pieceRadius,
@@ -149,17 +176,24 @@ export default {
                 }
                 let targetCY = this.cy(this.board.colHeight(col))
                 let velocity = 0
+
                 let animate = () => {
+                    // Compute next frame
                     velocity += this.acceleration
                     this.animationState.currentCY += velocity
+
                     if (this.animationState.currentCY >= targetCY) {
+                        // End animation
                         this.animationState = null
                         resolve()
                     }
                     else {
+                        // Queue next frame
                         requestAnimationFrame(animate)
                     }
                 }
+
+                // Queue first frame
                 requestAnimationFrame(animate)
             })
         },
