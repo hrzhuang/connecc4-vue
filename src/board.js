@@ -11,14 +11,6 @@ export default class Board {
         return newBoard
     }
 
-    get rows() {
-        return this._rows
-    }
-
-    get cols() {
-        return this._cols
-    }
-
     get(row, col) {
         return this._columns[col][row]
     }
@@ -163,7 +155,7 @@ export default class Board {
         /* Score columns */
         directR = 1
         directC = 0
-        cond = (row, col) => row < this._rows
+        cond = row => row < this._rows
         for (let row = 0, col = 0; col < this._cols; ++col)
             score += this._scoreLine(row, col, directR, directC, cond)
 

@@ -6,135 +6,80 @@
         :height="aboveBoard + boardHeight"
         xmlns="http://www.w3.org/2000/svg">
 
-        <defs>
-            <mask id="boardMask">
-                <rect
-                    :y="aboveBoard"
-                    :width="boardWidth"
-                    :height="boardHeight"
-                    fill="white"
-                    rx="10"
-                    />
-                <template v-for="(_, row) in rows">
-                    <circle
-                        v-for="(_, col) in cols"
-                        :cx="cx(col)"
-                        :cy="cy(row)"
-                        :r="holeRadius"
-                        />
-                </template>
-            </mask>
-            <circle
-                id="humanPiece"
-                :r="pieceRadius"
-                fill="#ffd500"
-                />
-            <circle
-                id="computerPiece"
-                :r="pieceRadius"
-                fill="#e63c1a"
-                />
-        </defs>
-
         <!-- pieces on board -->
         <template
-            v-for="(_, col) in board.cols">
-            <use
+            v-for="(_, col) in cols"
+            >
+            <GamePiece
                 v-for="(_, row) in board.colHeight(col)"
-                :href="pieceId(board.get(row, col))"
+                :key="col*row+row"
+                :isHuman="board.get(row, col)"
                 :x="cx(col)"
                 :y="cy(row)"
                 />
         </template>
 
         <!-- Hovering piece -->
-        <use 
+        <GamePiece 
             v-show="showHoveringPiece"
-            href="#humanPiece"
+            :isHuman="true"
             :x="cx(hoverCol)"
             :y="pieceRadius"
             />
 
         <!-- Animated piece -->
-        <use
+        <GamePiece
             v-if="animationState"
-            :href="pieceId(animationState.isHuman)"
+            :isHuman="animationState.isHuman"
             :x="cx(animationState.col)"
             :y="animationState.currentCY"
             />
 
-        <!-- Board cover -->
-        <rect
-            :y="aboveBoard"
-            :width="boardWidth" 
-            :height="boardHeight" 
-            fill="#3d6bf5"
-            mask="url(#boardMask)"
-            />
+        <GameBoard />
 
         <!-- Hover column detector -->
-        <rect
+        <GameInvisibleColumn
             v-for="col in board.availableMoves()"
-            :x="boardPadding + col*(2*pieceRadius + pieceGap)"
-            :y="aboveBoard"
-            :width="2*pieceRadius"
-            :height="boardHeight"
-            fill="none"
-            pointer-events="visible"
-            @mouseover="hoverCol = col"
-            @mouseout="hoverCol = null"
-            @click="attemptMove(col)"
+            :key="col"
+            :col="col"
+            @mouseover.native="hoverCol = col"
+            @mouseout.native="hoverCol = null"
+            @click.native="attemptMove(col)"
             />
     </svg>
 </template>
 
 
 <script>
-import Board from './board.js'
 import Worker from 'worker-loader!./worker.js'
 import PromiseWorker from 'promise-worker'
-
-const rows = 6, cols = 7
-const holeRadius = 20, boardPadding = 10, pieceGap = 10, hoverHeight = 10
-const acceleration = 1
+import Board from './board.js'
+import gameGraphicsMixin from './gameGraphicsMixin.js'
+import GameBoard from './GameBoard.vue'
+import GamePiece from './GamePiece.vue'
+import GameInvisibleColumn from './GameInvisibleColumn.vue'
 
 export default {
+    mixins: [ gameGraphicsMixin ],
+    components: {
+        GameBoard,
+        GamePiece,
+        GameInvisibleColumn,
+    },
     data: function() {
         return {
-            /* Constants */
-            rows,
-            cols,
-            holeRadius,
-            boardPadding,
-            pieceGap,
-            hoverHeight,
-            acceleration,
-
-            /* Variables */
             hoverCol: null,
-            board: new Board(rows, cols),
+            // The board object will be initiated in created hook
+            board: null,
             animationState: null,
             awaitingInput: true,
             worker: new PromiseWorker(new Worker()),
         }
     },
+    created: function() {
+        this.board = new Board(this.rows, this.cols)
+    },
     computed: {
-        pieceRadius: function() {
-            return this.holeRadius + 5
-        },
-        boardWidth: function() {
-            return 2*this.pieceRadius*this.cols 
-                + this.pieceGap*(this.cols - 1)
-                + 2*this.boardPadding
-        },
-        boardHeight: function() {
-            return 2*this.pieceRadius*this.rows 
-                + this.pieceGap*(this.rows - 1)
-                + 2*this.boardPadding
-        },
-        aboveBoard: function() {
-            return 2*this.pieceRadius + this.hoverHeight
-        },
         showHoveringPiece: function() {
             return this.hoverCol != null
                 && this.board.isAvailableMove(this.hoverCol)
@@ -142,26 +87,6 @@ export default {
         },
     },
     methods: {
-        cx: function(col) {
-            return this.boardPadding 
-                + (2*col + 1)*this.pieceRadius
-                + this.pieceGap*col
-        },
-        cy: function(row) {
-            return this.aboveBoard
-                + this.boardHeight
-                - this.boardPadding
-                - (2*row + 1)*this.pieceRadius
-                - this.pieceGap*row
-        },
-        pieceId: function(isHuman) {
-            if (isHuman) {
-                return "#humanPiece"
-            }
-            else {
-                return "#computerPiece"
-            }
-        },
         attemptMove: function(col) {
             if (this.awaitingInput) {
                 this.awaitingInput = false
