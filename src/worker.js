@@ -7,11 +7,11 @@ const depth = 4
 
 registerPromiseWorker(message => {
     let board = Board.from(message.board)
-    let gameOver = board.makeMove(message.move, true)
+    let { gameOver, draw } = board.makeMove(message.move, true)
 
     let availableMoves = board.availableMoves()
 
-    if (availableMoves.length > 0) {
+    if (!gameOver && availableMoves.length > 0) {
         // Find move with the maximum score
         let bestMove = availableMoves[0]
         let bestScore = board.minimax(bestMove, depth, false)
