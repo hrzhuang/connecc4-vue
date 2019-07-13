@@ -7,7 +7,7 @@ const depth = 4
 
 registerPromiseWorker(message => {
     let board = Board.from(message.board)
-    let { gameOver, draw } = board.makeMove(message.move, true)
+    let { gameOver, } = board.makeMove(message.move, true)
 
     let availableMoves = board.availableMoves()
 
