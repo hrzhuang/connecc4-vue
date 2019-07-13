@@ -2,6 +2,8 @@
     <g>
         <defs>
             <mask id="boardMask">
+
+                <!-- Rounded corners -->
                 <rect
                     :y="aboveBoard"
                     :width="boardWidth"
@@ -9,6 +11,8 @@
                     fill="white"
                     rx="10"
                     />
+
+                <!-- Holes -->
                 <template v-for="(_, row) in rows">
                     <circle
                         v-for="(_, col) in cols"
@@ -21,6 +25,7 @@
             </mask>
         </defs>
 
+        <!-- Actual board -->
         <rect
             :y="aboveBoard"
             :width="boardWidth" 

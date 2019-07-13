@@ -5,6 +5,8 @@ export default class Board {
         this._columns = Array(cols).fill(null).map(() => [])
     }
 
+    /* Used to create board object from object passed to worker through message
+     */
     static from(board) {
         let newBoard = new Board(board._rows, board._cols)
         newBoard._columns = board._columns
@@ -35,14 +37,14 @@ export default class Board {
     makeMove(col, isHuman) {
         this._columns[col].push(isHuman)
 
-        /* Check column victory */
+        // Check column victory
         if (
             this.colHeight(col) >= 4 
             && this._columns[col].slice(-4).every(piece => piece == isHuman)
         )
             return { gameOver: true, draw: false }
 
-        /* Check row victory */
+        // Check row victory
         let row = this.colHeight(col) - 1
         for (
             let c = Math.max(col - 3, 0), 
@@ -60,7 +62,7 @@ export default class Board {
                 return { gameOver: true, draw: false }
         }
 
-        /* Check diagonal victory */
+        // Check diagonal victory
         for (
             let lBound = Math.min(row, col, 3),
             uBound = Math.min(this._rows - row - 1, this._cols - col - 1, 3),
@@ -101,14 +103,20 @@ export default class Board {
                 return { gameOver: true, draw: false }
         }
 
-        /* Check draw */
+        // Check draw
         if (this._columns.every(column => column.length == this._rows))
             return { gameOver: true, draw: true }
 
         return { gameOver: false }
     }
 
+    /* move: the move being evaluated
+     * depth: maximum depth of the search
+     * minimizing: whether or not the player making the move is trying to
+     * minimize score (the human player)
+     */
     minimax(move, depth, minimizing) {
+        // Make the move
         let { gameOver, draw } = this.makeMove(move, minimizing), evaluation
 
         if (gameOver) {
@@ -121,6 +129,8 @@ export default class Board {
             evaluation = this.score()
         else {
             if (minimizing) {
+                // The score of this move is the maximum of the scores of the
+                // possible next moves, since the next player is maximizing
                 evaluation = Math.max(
                     ...this.availableMoves()
                         .map(availableMove => 
@@ -129,6 +139,7 @@ export default class Board {
                 )
             }
             else {
+                // Same idea as before
                 evaluation = Math.min(
                     ...this.availableMoves()
                         .map(availableMove =>
@@ -138,28 +149,30 @@ export default class Board {
             }
         }
 
+        // Undo the move made earlier since we are not committing it yet
         this._columns[move].pop()
         return evaluation
     }
 
+    /* Scores the current position of the board */
     score() {
         let score = 0, directR, directC, cond
 
-        /* Score rows */
+        // Score rows 
         directR = 0
         directC = 1
         cond = (row, col) => col < this._cols
         for (let row = 0, col = 0; row < this._rows; ++row)
             score += this._scoreLine(row, col, directR, directC, cond)
 
-        /* Score columns */
+        // Score columns 
         directR = 1
         directC = 0
         cond = row => row < this._rows
         for (let row = 0, col = 0; col < this._cols; ++col)
             score += this._scoreLine(row, col, directR, directC, cond)
 
-        /* Score forward diagonals */
+        // Score columns 
         directR = 1
         directC = 1
         cond = (row, col) => row < this._rows && col < this._cols
@@ -168,7 +181,7 @@ export default class Board {
         for (let row = 1, col = 0; row < this._rows; ++row)
             score += this._scoreLine(row, col, directR, directC, cond)
 
-        /* Score backward diagonals */
+        // Score columns 
         directR = 1
         directC = -1
         cond = (row, col) => row < this._rows && col > 0
@@ -180,9 +193,11 @@ export default class Board {
         return score
     }
 
+    /* Scores a line (vertical, horizontal, or diagonal) on the board */
     _scoreLine(startR, startC, directR, directC, cond) {
         let score = 0, row = startR, col = startC, isHuman, length = 0
 
+        // Count empty squares until first non-empty square
         for (
             let square;
             isHuman == undefined && cond(row, col);
@@ -193,6 +208,8 @@ export default class Board {
                 isHuman = square
         }
 
+        // This requires more explanation than a single comment, perhaps I will
+        // document this elsewhere
         if (isHuman != undefined) {
             for (
                 let square, pieces = 1;
@@ -229,6 +246,9 @@ export default class Board {
         return score
     }
 
+    /* Returns a value given the number of pieces in a 4-piece segment with only
+     * pieces of the same color
+     */
     _value(pieces) {
         if (pieces == 3)
             return 2

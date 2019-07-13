@@ -12,6 +12,7 @@ registerPromiseWorker(message => {
     let availableMoves = board.availableMoves()
 
     if (availableMoves.length > 0) {
+        // Find move with the maximum score
         let bestMove = availableMoves[0]
         let bestScore = board.minimax(bestMove, depth, false)
 
@@ -28,5 +29,5 @@ registerPromiseWorker(message => {
         return bestMove
     }
     else
-        return null
+        return
 })
