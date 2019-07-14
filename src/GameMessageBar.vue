@@ -1,5 +1,5 @@
 <template>
-    <div>{{ message }}</div>
+    <div id="gameMessageBar">{{ message }}</div>
 </template>
 
 
@@ -32,3 +32,15 @@ export default {
     },
 }
 </script>
+
+
+<style scoped>
+#gameMessageBar {
+    background-color: #1a1a1a;
+    color: white;
+    margin: 8px 0 0 0;
+    font-size: 16px;
+    padding: 8px;
+    border-radius: 8px;
+}
+</style>

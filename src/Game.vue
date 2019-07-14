@@ -1,5 +1,7 @@
 <template>
-    <div>
+    <div
+        id="game"
+        >
         <svg
             version="1.1"
             baseprofile="full"
@@ -200,3 +202,10 @@ export default {
     },
 }
 </script>
+
+
+<style scoped>
+#game {
+    display: inline-block;
+}
+</style>
